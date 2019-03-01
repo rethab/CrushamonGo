@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">CrushamonGo</string>
     <string name="app_slogan">Make the World a Better Place</string>
+    <string name="player_name">Player: %s</string>
     <plurals name="crushes">
         <item quantity="zero">You don\'t have any crushes!</item>
         <item quantity="one">You have %d crush!</item>

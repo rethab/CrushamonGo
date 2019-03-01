@@ -1,11 +1,17 @@
 package ch.rethab.cg;
 
+import android.arch.lifecycle.ViewModelProviders;
+import android.databinding.DataBindingUtil;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.TextView;
+
+import com.android.volley.Response;
+import com.android.volley.toolbox.Volley;
+
+import ch.rethab.cg.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity implements CrushListener {
 
@@ -13,9 +19,9 @@ public class MainActivity extends AppCompatActivity implements CrushListener {
     private Sensor accelerometer;
 
     private CrushDetector crushDetector;
+    private CrushStorage crushStorage;
 
-    private TextView crushesView;
-    private int crushes = 0;
+    private UserViewModel model;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,9 +32,20 @@ public class MainActivity extends AppCompatActivity implements CrushListener {
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         crushDetector = new CrushDetector(this);
-        crushesView = findViewById(R.id.crushes);
+        crushStorage = new CrushStorage(Volley.newRequestQueue(this));
 
-        updateCrushesView();
+        model = ViewModelProviders.of(this).get(UserViewModel.class);
+
+        ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        binding.setUserViewModel(model);
+
+        crushStorage.getPlayer(model.getPlayerName(), new Response.Listener<Player>() {
+            @Override
+            public void onResponse(Player player) {
+                model.setCrushes(player.crushes);
+                Log.d("MainActivity", "model.setCrushes("+player.crushes+")");
+            }
+        });
     }
 
     @Override
@@ -45,13 +62,12 @@ public class MainActivity extends AppCompatActivity implements CrushListener {
 
     @Override
     public void onCrush() {
-        crushes++;
-        updateCrushesView();
-    }
-
-    private void updateCrushesView() {
-        String newText = getResources().getQuantityString(R.plurals.crushes, crushes, crushes);
-        crushesView.setText(newText);
+        crushStorage.incCrushes(model.getPlayerName(), new Response.Listener<Player>(){
+            @Override
+            public void onResponse(Player player) {
+                model.setCrushes(player.crushes);
+            }
+        });
     }
 }
 
